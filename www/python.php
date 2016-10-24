@@ -15,6 +15,14 @@ foreach( $layers as $layer ) {
 
 import io, urllib2, datetime, time, re, random
 from PIL import Image, ImageDraw
+
+python_version = sys.version_info.major
+
+if python_version == 3:
+	import urllib.request
+else:
+	import urllib2
+
 # ^^^^^^ install "python-pillow" package | pip install Pillow | easy_install Pillow
 
 (zoom, xmin, ymin, xmax, ymax) = (<?=$zoom ?>, <?=$xmin ?>, <?=$ymin ?>, <?=$xmax ?>, <?=$ymax ?>)
@@ -32,12 +40,16 @@ for x in range(xmin, xmax+1):
 			match = re.search("{([a-z0-9]+)}", url)
 			if match:
 				url = url.replace(match.group(0), random.choice(match.group(1)))
-			print url, "... ";
+			print(url, "... ")
 			try:
-				req = urllib2.Request(url, headers={'User-Agent': 'BigMap/2.0'})
-				tile = urllib2.urlopen(req).read()
-			except Exception, e:
-				print "Error", e
+				if python_version == 3:
+					req = urllib.request.Request(url, headers={'User-Agent': 'BigMap/2.0'})
+					tile = urllib.request.urlopen(req).read()
+				else:
+					req = urllib2.Request(url, headers={'User-Agent': 'BigMap/2.0'})
+					tile = urllib2.urlopen(req).read()   
+			except Exception as e:
+				print("Error", e)
 				continue;
 			image = Image.open(io.BytesIO(tile))
 			resultImage.paste(image, ((x-xmin)*256, (y-ymin)*256), image.convert("RGBA"))
@@ -53,3 +65,4 @@ del draw
 now = datetime.datetime.now()
 outputFileName = "map%02d-%02d%02d%02d-%02d%02d.png" % (zoom, now.year % 100, now.month, now.day, now.hour, now.minute)
 resultImage.save(outputFileName)
+print("Bigmap output complete.")
